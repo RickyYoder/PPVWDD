@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width"/>
+		<link rel="stylesheet" href="/.css"/>
+		<link rel="shortcut icon" href="/favicon.ico"/>
+		<style>
+			html,body{margin:0;padding:0;}
+			
+			#can{
+			border:1px solid #FF0000;
+			display:block;
+			margin:0 auto;
+			}
+			
+			form,#result{
+			max-width:320px;
+			margin:2em auto;
+			}
+			
+			#result div{
+			display:inline-block;
+			margin:0 10px;
+			}
+		</style>
+		<title>Ajango Encrypter</title>
+	</head>
+	<body>
+		<canvas id="can" width="100" height="100"></canvas>
+		
+		<form name="enc">
+			<fieldset>
+				<legend>Encrypt a String</legend>
+				<textarea name="str" style="width:90%;height:8em;display:block;margin:0 auto;"></textarea>
+				<br/>
+				<input type="checkbox" id="comp"/>Compress String
+				<br/>
+				<input type="submit" value="Encrypt"/>
+			</fieldset>
+		</form>
+		
+		<div id="result">
+		
+		</div>
+		
+		<form name="dec">
+			<fieldset>
+				<legend>Decrypt a String</legend>
+				<input type="file" id="input"/>
+				
+				<textarea name="str" style="width:90%;height:8em;display:block;margin:0 auto;" readonly></textarea>
+				<canvas style="display:none" id="hidden"></canvas>
+				<input type="submit" name="submit" value="Write String to New Window/Tab"/>
+			</fieldset>
+		</form>
+		<script>
+		Number.prototype.toUInt=function(){ return this<0?this+4294967296:this; };
+Number.prototype.bytes32=function(){ return [(this>>>24)&0xff,(this>>>16)&0xff,(this>>>8)&0xff,this&0xff]; };
+Number.prototype.bytes16sw=function(){ return [this&0xff,(this>>>8)&0xff]; };
+
+Array.prototype.adler32=function(start,len){
+	switch(arguments.length){ case 0:start=0; case 1:len=this.length-start; }
+	var a=1,b=0;
+	for(var i=0;i<len;i++){
+		a = (a+this[start+i])%65521; b = (b+a)%65521;
+	}
+	return ((b << 16) | a).toUInt();
+};
+
+Array.prototype.crc32=function(start,len){
+	switch(arguments.length){ case 0:start=0; case 1:len=this.length-start; }
+	var table=arguments.callee.crctable;
+	if(!table){
+		table=[];
+		var c;
+		for (var n = 0; n < 256; n++) {
+			c = n;
+			for (var k = 0; k < 8; k++)
+				c = c & 1?0xedb88320 ^ (c >>> 1):c >>> 1;
+			table[n] = c.toUInt();
+		}
+		arguments.callee.crctable=table;
+	}
+	var c = 0xffffffff;
+	for (var i = 0; i < len; i++)
+		c = table[(c ^ this[start+i]) & 0xff] ^ (c>>>8);
+
+	return (c^0xffffffff).toUInt();
+};
+
+
+(function(){
+	var toDataURL=function(){
+		var imageData=Array.prototype.slice.call(this.getContext("2d").getImageData(0,0,this.width,this.height).data);
+		var w=this.width;
+		var h=this.height;
+		var stream=[
+			0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,
+			0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52
+		];
+		Array.prototype.push.apply(stream, w.bytes32() );
+		Array.prototype.push.apply(stream, h.bytes32() );
+		stream.push(0x08,0x06,0x00,0x00,0x00);
+		Array.prototype.push.apply(stream, stream.crc32(12,17).bytes32() );
+		var len=h*(w*4+1);
+		for(var y=0;y<h;y++)
+			imageData.splice(y*(w*4+1),0,0);
+		var blocks=Math.ceil(len/32768);
+		Array.prototype.push.apply(stream, (len+5*blocks+6).bytes32() );
+		var crcStart=stream.length;
+		var crcLen=(len+5*blocks+6+4);
+		stream.push(0x49,0x44,0x41,0x54,0x78,0x01);
+		for(var i=0;i<blocks;i++){
+			var blockLen=Math.min(32768,len-(i*32768));
+			stream.push(i==(blocks-1)?0x01:0x00);
+			Array.prototype.push.apply(stream, blockLen.bytes16sw() );
+			Array.prototype.push.apply(stream, (~blockLen).bytes16sw() );
+			var id=imageData.slice(i*32768,i*32768+blockLen);
+			Array.prototype.push.apply(stream, id );
+		}
+		Array.prototype.push.apply(stream, imageData.adler32().bytes32() );
+		Array.prototype.push.apply(stream, stream.crc32(crcStart, crcLen).bytes32() );
+
+		stream.push(0x00,0x00,0x00,0x00,0x49,0x45,0x4e,0x44);
+		Array.prototype.push.apply(stream, stream.crc32(stream.length-4, 4).bytes32() );
+		return "data:image/png;base64,"+btoa(stream.map(function(c){ return String.fromCharCode(c); }).join(''));
+	};
+	
+	var tdu=HTMLCanvasElement.prototype.toDataURL;
+	
+	HTMLCanvasElement.prototype.toDataURL=function(type){
+
+			var res=tdu.apply(this,arguments);
+			if(res == "data:,"){
+				HTMLCanvasElement.prototype.toDataURL=toDataURL;
+				return this.toDataURL();
+			}else{
+				HTMLCanvasElement.prototype.toDataURL=tdu;
+				return res;
+			}
+	}
+
+})();
+		</script>
+		<script>
+			var can = document.getElementById('can'),
+				ctx = can.getContext('2d');
+			
+			
+			function enc(str){
+				var array = [],
+					charArray = str.split(''),
+					code,
+					width,
+					offsetX = 0,
+					offsetY = 0;
+				
+				for(var x = 0; x < charArray.length; x++){
+					code = charArray[x].charCodeAt(0);
+					if(code <= 255){
+						array.push([code,code,code]);
+					}else{
+						var output = [],
+							sNumber = code.toString();
+
+						for (var i = 0, len = sNumber.length; i < len; i += 1) {
+							output.push(+sNumber.charAt(i));
+						}
+						
+						if(output.length == 4){
+							array.push([Number(output[0]+""+output[1]),output[2],output[3]]);
+						}
+						
+						if(output.length == 5){
+							array.push([Number(output[0]+""+output[1]),Number(output[2]+""+output[3]),output[4]]);
+						}
+						
+						if(output.length == 6){
+							array.push([Number(output[0]+""+output[1]),Number(output[2]+""+output[3]),Number(output[4]+""+output[5])]);
+						}
+					}
+				}
+				
+				if(array.length % 2 === 0){
+					width = array.length;
+				}else{
+					width = array.length + 1; 
+				}
+				
+				width = width / 2;
+				
+				if(width > 80){
+					width = 80;
+				}
+				
+				can.width = width;
+				can.height = Math.round(array.length / width)+1;
+				
+				for(var y = 0; y < array.length; y++){
+					if(offsetX == width){
+						offsetX = 0;
+						offsetY++;
+					}
+					
+					ctx.beginPath();
+					ctx.fillStyle = 'rgb('+array[y][0]+','+array[y][1]+','+array[y][2]+')';
+					ctx.fillRect(offsetX,offsetY,1,1);
+					ctx.stroke();
+					
+					offsetX++;
+
+				}
+			}
+			
+			function dec(CTX){
+				var array = [];
+				var result = '';
+				var data = CTX.getImageData(0,0,can.width,can.height).data;
+				
+				for (var i = 0; i < data.length; i += 4) {
+					var r = data[i];
+					var g = data[i + 1];
+					var b = data[i + 2];
+					var a = data[i + 3];
+					
+					if(r == g && r == b){
+						if(r === 0){}
+						else {array.push(r);}
+					}else{
+						array.push(Number(r+""+g+""+b));
+					}
+				}
+				
+				for(var y = 0; y < array.length; y++){
+					if(array[y]){
+						result += String.fromCharCode(array[y]);
+					}
+				}
+				
+				return result;
+			}
+			
+			document.forms['enc'].addEventListener('submit',function(e){
+				e.preventDefault();
+				e.stopPropagation();
+				
+				var val = this.str.value;
+				
+				if(document.getElementById('comp').checked){
+					val = val.replace(/\t/g,'');
+					val = val.replace(/\n/g,'');
+				}
+								
+				enc(val);
+				
+				var data = can.toDataURL('image/png');
+				
+				result.innerHTML = '';
+				result.innerHTML = '<div> <img src="'+data+'"/><br/><a href="'+data+'" download="code.png">Download</a></div>';
+				
+			},false);
+			
+			document.forms['dec'].addEventListener('submit',function(e){
+				e.preventDefault();
+				e.stopPropagation();
+			},false);
+			
+			document.forms['dec'].input.addEventListener('change',function(e){
+				if(!this.value) return 0;
+				var file = this.files[0];
+				var reader = new FileReader();
+				
+				reader.onload = (function(){
+					return function(e) {
+						var can = document.getElementById('hidden');
+						var ctx = can.getContext('2d');
+						
+						var img = new Image();
+						img.src = e.target.result;
+						
+						can.width = img.width;
+						can.height = img.height;
+						
+						ctx.drawImage(img,0,0,can.width,can.height);
+						
+						document.forms['dec'].str.value = dec(ctx);
+					};
+				})(file);
+				
+				reader.readAsDataURL(file);
+			},false);
+			
+			document.forms['dec'].submit.addEventListener('click',function(){
+				if(document.forms['dec'].input.value && document.forms['dec'].str.value){
+					var win = window.open();
+					win.document.write(document.forms['dec'].str.value);
+					win.focus();
+				}
+			},false);
+		</script>
+	</body>
+</html>

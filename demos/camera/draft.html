@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="viewport" content="width=device-width,user-scalable=no"/>
+	<style>
+		*{
+		box-sizing:border-box;
+		-webkit-box-sizing:border-box;
+		-moz-box-sizing:border-box;
+		font-family:"Times New Roman",Arial,sans-serif;
+		-webkit-touch-callout:none;
+		-webkit-user-select:none;
+		-khtml-user-select:none;
+		-moz-user-select:none;
+		-ms-user-select:none;
+		user-select:none;
+		}
+		
+		html,body{
+		margin:0;
+		padding:0;
+		height:100%;
+		width:100%;
+		position:relative;
+		}
+		
+		video{display:none;}
+		
+		input[type=range]{
+		-webkit-appearance:none;
+		background-color:#fff;
+		width:100px;
+		height:1em;
+		border-radius:50%;
+		border-radius:.5em;
+		border:2px solid #000;
+		}
+
+		input[type="range"]::-webkit-slider-thumb{
+		width:2em;
+		height:1em;
+		border-radius:50%;
+		border-radius:1.5em;
+		border:1px solid #aaa;
+		}
+		
+		#live,#snapshot{
+		width:100%;
+		height:100%;
+		display:inline-block;
+		background:rgba(0,0,0,.5);
+		position:absolute;
+		top:0;
+		left:0;
+		}
+		
+		#live{
+		z-index:99;
+		}
+		
+		#snapshot{
+		z-index:98;
+		}
+		
+		canvas{
+		background:#fff;
+		display:block;
+		margin:0 auto;
+		}
+		
+		.options{
+		position:absolute;
+		bottom:0;
+		left:0;
+		width:100%;
+		height:3em;
+		background:rgba(255,255,255,.5);
+		border-top:1px solid #aaa;
+		}
+		
+		.options *{
+		vertical-align:middle;
+		border:0 solid #000;
+		outline:none;
+		}
+		
+		.options *:focus{
+		outline:none;
+		}
+		
+		.options label{
+		background:#000;
+		color:#fff;
+		}
+		
+		#deviceSetting{
+		width:3em;
+		height:3em;
+		background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAAulBMVEUAAACCg4aVl5u4trRpa2yTlphmZ2kAAAAAAAAAAAAAAACOkJKTlZikpad2eHoAAABrbW6Ehoi2uLqQkpTZ2dmxs7XExcednqC6u76XmZuNj5GkpabR0NDMysi7wMLn6OirrK+Ji43Kzc/T1Nbg4eFtre17reaBgoR5tfGLteJhnd1rlsaPormqyOCfu9XI3OuGxPpvcXS05P7+/f11d3ny8/OHsvGXsvRLkeMyd8RQk+I5fMSzt/vg7fjd1Ec7AAAAEnRSTlMAioH8of6KDxU3BmG+xTsmn99SEyadAAACHUlEQVR4Xt3PV3PaQBSGYSNljYMA29u7uujNvST//29lD4oM8mTie78XzBnxjEbfxfcuGSsEqXEy+geYDsbj8SD8lUx4WkEpnySfTBJF0RgppdA4iiaxo20unkRtyRTcKJmwUxl33LeFK2PHJskIYMTuT6VVWdy1FWWVtg9ZBHAYsUdbUctZmlJot2/bhdvHcezvs8EQ4OVM5wQJFmBZUlqlv9vSitJis9+4D3g4oNlMC1ZVAYasg2y4Srq729HHD/hgSJ5rDLC0HGcCyjC34SvTtDqDD0IdoS0pNiKLoUwYWVroDDKtVQuZMevV++vr6/tqbQwrj9B8wFwhrTGlBRfZerWs5/N5vVytM8GLUHqCCiECkDMDbg+BNIz3oSEEkQC9iFfL+b5tvlzFwhfOATwbQyQtpeZNPe+qG65lwXllemOILAN0Td3Jum6clhxgbwyR1uLc9t5ocxwgFb0xRBbFET51nWBvDECWu6Z5Dj3BT9O4AL0vxacxnDMtt4vnrqetJMx7b0VvDEBsiNsum19Qs9w6YrCUslCfxniPmTZys3h7eXl5W2ykIQwgP8Hgci29xFggg7cLaIsNEhg6gyaf5UoGhzNFVOystS4OV4Yhjzp4eJjNCAsOpCD5DMqJODqG5V84UJymKS08OKBGQAYYdIK3SAmhEOnSbaQL3bZwennz47/dXE4Bjq6uf37R9dXoAuTw6ouGI4DfqD9MrGx57HIPPgAAAABJRU5ErkJggg==) no-repeat top left;
+		background-size:100% 100%;
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		-o-appearance:none;
+		appearance:none;
+		text-indent:-1000px;
+		}
+		
+		#filterSetting{
+		width:3em;
+		height:3em;
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		-o-appearance:none;
+		appearance:none;
+		background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAA3lBMVEUAAAB7gIRmam9eYmdwdHhpbXJ1en98gYWEiY18gIR+g4eBhYpvc3hrb3Rzd3x3e4B0eH1zdnt8gYV+g4eChouCh4tcX2VcYGVvc3h5foN7f4SChop/g4h+goaBhYl2en99gYaDh4xdYGZcYGVxdXpcYGVxdXpzd3x5foJ6foOChouDh4xwdHh8gIReYmddYWZcYGVcYGWAhImDh4yChot2en96f4NxdXqAhImDiIx+g4d9goZ8gYV4fYFkaG1pbXFtcXZgZGlzd3xeYmdna3BscHVjZ2xydnuBhYpwdXrBBiMUAAAAM3RSTlMALZ2emRQc742Z33agBVfaD4JtZLTONfgJtqTvWCP37D6mgWbP5ZXEyvlLg26Dw5Fcx42oCVgZAAABG0lEQVR4XsXSx3LCQAyAYTnEdrJr3DuudFPSaOm9vv8LJZ4FQsD27oGZfKPjP9JF8I8MfMQAG6CPjxmMdRhphwy0EZhWg4FlQmpdMbBSGJqTH9NJNRODEKTRlCIaDgQAzkCNz0rIGoSQw+ZllegiASIMfPG6TIRwwsMSpyPxpgTyOBV+6f5tkXmGjBA2cYEnzneJfZ3s+xViJbvblim+4MI2w18Gs3xycT9RYRcne/Fsk+IZQh0KCJryJ+xpLpSQu89rirRaV3i9F38QbUlWoRyvtReLr3y6MlRypUeC3K2wCnmghW8ENTx4IPYYvhL08J7YY/hOUMPaE7HH8IVgCR3npNZ0qaHjdDqnLbsOFM3zlq0CA/vMpnwYzTdKqnZ1T+k0+gAAAABJRU5ErkJggg==) no-repeat top left;
+		background-size:100% 100%;
+		text-indent:-1000px;
+		}
+		
+		#fullscreenSetting{
+		width:3em;
+		height:3em;
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		-o-appearance:none;
+		appearance:none;
+		background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAAXVBMVEUAAADS0tIAAAC0tLTJycnW1tb////c3Nzb29utra3Nzc3BwcHZ2dm8vLy3t7f9/f0AAADGxsYAAAAAAAD7+/uAgIA1NTX19fXs7OwAAAATExNQUFBjY2P///8AAACI9ODZAAAAHXRSTlMA2O3E0tz739/A1s/eydr0tdvbz/La5ezaq/XP3znQplEAAADWSURBVHhe3dHhDoIgFIbhAAGEg1qqpXW4/8vM0VjD5ZH++v5+Bvt2LqcqFPYPfNa1EN4757wXok4J4Z1lEsBoM0ZY42FQCk2E4hdQ7bSkHSRE9ej4BnrckTPPoUOk30ywwr2GPoMM9+t5hBChJODQ8S8EJLrPfIUyQoOk7BZEFqFGsuGFaBNsFI2rBKdrS0KXYLjZtgyG21XRXycYeFMG14hFNoN8fxHLYLaIgsQiuYFhagiY35qCcOhUE+EIkjFbfbKWMSlBgjEa9Bpoo10fYVnl8Ey9ARSjfBcYn/0aAAAAAElFTkSuQmCC) transparent no-repeat top left;
+		background-size:100% 100%;
+		
+		}
+		
+		#mini{
+		position:absolute;
+		bottom:3em;
+		opacity:0.4;
+		-webkit-transition:all .5s;
+		-moz-transition:all .5s;
+		transition:all .5s;
+		}
+		
+		#mini:hover,#mini:active{
+		opacity:1;
+		}
+		
+		.bubble 
+		{
+		position: relative;
+		width: 250px;
+		height: 120px;
+		padding: 0px;
+		background: #ccc;
+		-webkit-border-radius: 10px;
+		-moz-border-radius: 10px;
+		border-radius: 10px;
+		border: #000 solid 3px;
+		}
+
+		.bubble:after 
+		{
+		content: '';
+		position: absolute;
+		border-style: solid;
+		border-width: 25px 12px 0;
+		border-color: #ccc transparent;
+		display: block;
+		width: 0;
+		z-index: 1;
+		margin-left: -12px;
+		bottom: -25px;
+		left: 50%;
+		}
+
+		.bubble:before 
+		{
+		content: '';
+		position: absolute;
+		border-style: solid;
+		border-width: 27px 14px 0;
+		border-color: #000 transparent;
+		display: block;
+		width: 0;
+		z-index: 0;
+		margin-left: -14px;
+		bottom: -30px;
+		left: 50%;
+		}
+	</style>
+</head>
+<body>
+	<video id="vid" autoplay></video>
+	<div id="live">
+		<!--<div class="bubble" style="margin:0 auto;">
+			test
+		</div>-->
+		<canvas id="preview"></canvas>
+		<canvas id="mini" style="display:none;right:0;"></canvas>
+		<div class="options" id="captureOptions">
+			<select id="deviceSetting">
+			
+			</select>
+			<select id="filterSetting">
+				<option value="">-Filter-</option>
+				<option value="grayscale">Grayscale</option>
+				<option value="old">Old</option>
+				<option value="sepia">Sepia</option>
+				<option value="red">Red</option>
+				<option value="green">Green</option>
+				<option value="blue">Blue</option>
+				<option value="inverted">Inverted</option>
+				<option value="inverted2">Inverted 2</option>
+				<option value="inverted3">Inverted 3</option>
+			</select>
+			<input type="checkbox" id="fullscreenSetting"/>
+			<img style="height:1.5em;width:1.5em;background:yellow" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAATlBMVEUAAAC5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmpa7bjAAAAGXRSTlMA6d3BD+AF/T8buDFtYZnzJaxXRqaJ1cp62ZSOvgAAAXFJREFUeF690+uu2yAQhdHBTBgGMCa+5ez3f9E6TapxElQdtVW/X7G8hOXIm/6i1fv8LTgA8d/Cy+9giNqFYeFXN7tVOzAUV19kdJDEHzCMAmxnqKtArvoGQ5mAIdI5TXf5OHMeR32cdzi30Gt8FUg6AMcDLu1wRey8U3pIl7l4J8C018xXwJmzOLk5J/zKzc0PC/XSnHfIvsWWxzRhKi1TP05AbY+fxdlzPyqQan/tBM99xx57s8sqEvswOmyfl9Z6uQyXo3kWRLL0hkTHvfvNQQ/o8WgcgUanPDzh2TvMZPHtDeb4SJcJI1ltQKX4LNCptiOxwSKYqV/FVOxdLhiU+mVnX5UmyFfou8DzhKlGJW7lAlmV+65cW3EQd/O3QQ6X66o9Nwp8i17ws+GL63NHlu0jE8cteV9nDWw7smwf3R1Ztg9boe3o1OJsHwZJ73ILZHGF7cMgcZI90zneInUg6WbO6kAK9E1I/xWqaqA/7wcnrxvEPWbwIAAAAABJRU5ErkJggg==" onclick="document.getElementById('brightness').value = 30;brightness=0;"/>
+			<input type="range" id="brightness" min="0" max="60" step="1" value="30"/>
+		</div>
+		<div class="options" id="fileOptions" style="display:none">
+			<label>File Type</label>
+			<select id="filetype">
+				<option value="jpg">JPG</option>
+				<option value="png">PNG</option>
+				<option value="webp">WebP</option>
+			</select>
+			
+			<div style="display:inline-block" id="fileQualityOption">
+				<label>Quality</label>
+				<input type="number" min="0" max="1" step = ".1" value="1" id="fileQuality"/>
+			</div>
+			
+			
+			<a id="dl" href="#"><img src="data:image/png;base64,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" alt="Download"/></a>
+		</div>
+	</div>
+	<script>
+		/**
+		Credit goes to John Robinson for creating some of the filters.
+		http://www.storminthecastle.com/2013/04/06/how-you-can-do-cool-image-effects-using-html5-canvas/
+		**/
+		var live = document.getElementById('live'),
+			captureOptions = document.getElementById('captureOptions'),
+			fileOptions = document.getElementById('fileOptions'),
+			shutterButton = document.getElementById('shutterButton'),
+			vid = document.getElementById('vid'), //our hidden <video> element to draw our preview from
+			preview = document.getElementById('preview'), //our live preview canvas
+			previewCtx = preview.getContext('2d'),
+			mini = document.getElementById('mini'),
+			miniCtx = mini.getContext('2d'),
+			miniPos = 0,
+			
+			deviceSetting = document.getElementById('deviceSetting'),
+			fullscreenSetting = document.getElementById('fullscreenSetting'),
+			filterSetting = document.getElementById('filterSetting'),
+			brightnessSetting = document.getElementById('brightness'),
+			
+			
+			stream,
+			dontDraw = false,
+			useMini = false,
+			animationFrame,
+			Devices = [],
+			currentDevice,
+			currentFilter,
+			fullscreen,
+			
+			filetype = document.getElementById('filetype'),
+			fileQualityOption = document.getElementById('fileQualityOption'),
+			fileQuality = document.getElementById('fileQuality'),
+			dl = document.getElementById('dl'),
+			
+			brightness = 0,
+			filters = {
+				"old":function(pixels, args){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						
+						d[i] = d[i+1] = d[i+2] = Math.round((Math.random()*r+g+b)/3);
+						
+					}
+					return pixels;
+				},
+				
+				"inverted3":function(pixels, args){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i] = g;
+						d[i+1] = r;
+						d[i+2] = b;
+					}
+					return pixels;
+				},
+				
+				"inverted2":function(pixels, args){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i] = g;
+						d[i+1] = b;
+						d[i+2] = r;
+						
+					}
+					return pixels;
+				},
+				
+				"inverted":function(pixels, args){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i] = b;
+						d[i+1] = g;
+						d[i+2] = r;
+						
+					}
+					return pixels;
+				},
+				
+				"grayscale":function(pixels, args){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i] = d[i + 1] = d[i + 2] = (r+g+b)/3;
+					}
+					return pixels;
+				},
+				
+				"sepia":function(pixels,args){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i]     = (r * 0.393)+(g * 0.769)+(b * 0.189); // red
+						d[i + 1] = (r * 0.349)+(g * 0.686)+(b * 0.168); // green
+						d[i + 2] = (r * 0.272)+(g * 0.534)+(b * 0.131); // blue
+					}
+					return pixels;	
+				},
+				
+				"red":function (pixels, args) {
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i] = (r+g+b)/3;        // apply average to red channel
+						d[i + 1] = d[i + 2] = 0; // zero out green and blue channel
+					}
+					return pixels;
+				},
+				
+				"green":function (pixels, args) {
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i+1] = (r+g+b)/3;
+						d[i] = d[i+2] = 0;
+					}
+					return pixels;
+				},
+				
+				"blue":function (pixels, args) {
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						var r = d[i];
+						var g = d[i + 1];
+						var b = d[i + 2];
+						d[i+2] = (r+g+b)/3;
+						d[i] = 0;
+						d[i + 1] = (r+g+b)/3; 
+					}
+					return pixels;
+				},
+				
+				"brightness":function(pixels,delta,args) {
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						d[i] += delta;     // red
+						d[i + 1] += delta; // green
+						d[i + 2] += delta; // blue   
+					}
+					return pixels;
+				},
+				
+				"cust":function(pixels){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						
+					}
+				},
+				
+				"trans":function(pixels){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						d[i+3] = 0;
+					}
+					return pixels;
+				},
+				
+				"undotrans":function(pixels){
+					var d = pixels.data;
+					for (var i = 0; i < d.length; i += 4) {
+						d[i+3] = 255;
+					}
+					return pixels;
+				}
+			};
+			
+		/*
+			if(miniPos == 0){
+				dontDraw = true;
+				miniPos = 1;
+				mini.setAttribute("style","display:inline-block;left:0;");
+				dontDraw = false;
+			}else{
+				dontDraw = true;
+				miniPos = 0;
+				mini.setAttribute("style","display:inline-block;right:0;");
+				dontDraw = false;
+			}
+		*/
+			
+		preview.addEventListener('click',function(){
+			if(!stream) return;
+			mini.style.display = 'inline-block';
+			useMini = true;
+			fullscreenSetting.disabled = true;
+			
+			captureOptions.style.display = 'none';
+			fileOptions.style.display = 'block';
+		},false);
+		
+		mini.addEventListener('click',function(){
+			this.style.display = 'none';
+			useMini = false;
+			fullscreenSetting.disabled = false;
+			
+			captureOptions.style.display = 'block';
+			fileOptions.style.display = 'none';
+		},false);
+		
+		if(window.MediaStreamTrack && window.MediaStreamTrack.getSources){
+			MediaStreamTrack.getSources(function(devices){
+				if(devices.length == 0){
+					deviceSetting.innerHTML = '<option>No Camera</option>';
+				}
+				for(var x = 0; x < devices.length; x++){
+					if(devices[x].kind == 'video'){
+						Devices.push(devices[x].id);
+						var op = document.createElement("option");
+						op.value = devices[x].id;
+						if(!op.facing){
+							op.innerText = 'Camera '+Devices.length;
+						}else{
+							op.innerText = op.facing+' Camera';
+						}
+						deviceSetting.appendChild(op);
+					}
+				}
+			});
+		}else{
+			deviceSetting.innerHTML = "<option>Default Camera</option>";
+		}
+		
+		if(window.innerHeight > window.innerWidth || window.innerWidth < 400){
+			preview.width = window.innerWidth;
+			preview.height = window.innerHeight;
+		}else{
+			preview.width = preview.height = window.innerWidth / 4;
+		}
+		
+		function normalize(check){
+			if(!fullscreenSetting.disabled){
+				if(fullscreenSetting.checked){
+					preview.height = window.innerHeight;
+					preview.width = window.innerWidth;
+				}else{
+					if(check){
+						live.style.display = 'none';
+						preview.width = preview.height = window.innerHeight/2;
+						setTimeout(function(){
+							live.style.display = '';
+						},0);
+					}else{
+						preview.width = preview.height = window.innerHeight/2;
+					}
+				}
+				mini.height = mini.width = window.innerHeight/4;
+				if(mini.height > 150){
+					mini.height = mini.width = 150;
+				}
+			}
+		}
+		
+		normalize();
+		
+		//Settings/options for capture
+		fullscreenSetting.addEventListener('click',function(){normalize(true)},false);
+		
+		deviceSetting.addEventListener('change',function(){
+			if(this.value){
+				currentDevice = this.value;
+				if(stream){stream.stop();}
+				CaptureStream();
+			}
+		},false);
+		
+		filterSetting.addEventListener('change',function(){
+			if(this.value){
+				currentFilter = this.value;
+			}else{
+				currentFilter = '';
+			}
+		},false);
+		
+		brightnessSetting.addEventListener('input',function(){
+			var v = this.value;
+			if(v > 30){
+				brightness = v-30;
+			}
+			else if(v < 30){
+				brightness = (30-v)/-1;
+			}else{
+				brightness = 0;
+			}
+		},false);
+		
+		//
+		
+		//Settings/options for file
+		filetype.addEventListener('change',function(){
+			if(this.value == 'png'){
+				fileQualityOption.style.display = 'none';
+			}else{
+				fileQualityOption.style.display = 'inline-block';
+			}
+		},false);
+		
+		
+		//
+		
+		navigator.getUserMedia = navigator.webkitGetUserMedia||navigator.mozGetUserMedia||navigator.msGetUserMedia||navigator.getUserMedia;
+		
+		function filterCanvas() {
+			if (preview.width > 0 && preview.height > 0){
+				
+				var imageData;
+				
+				if(useMini){
+					imageData = miniCtx.getImageData(0,0,mini.width,mini.height);
+				}else{
+					imageData = previewCtx.getImageData(0,0,preview.width,preview.height);
+				}
+				
+				if(currentFilter){
+					imageData = filters[currentFilter](imageData);
+				}
+				if(brightness){
+					imageData = filters.brightness(imageData,brightness);
+				}
+				
+				if(useMini){
+					miniCtx.putImageData(imageData,0,0);
+				}else{
+					previewCtx.putImageData(imageData,0,0);
+				}
+			}
+		}
+		
+		function draw(){
+			try{
+				if(dontDraw){
+					setTimeout(function(){draw();},100);
+					return;
+				}
+				if(useMini){
+					miniCtx.drawImage(vid,0,0,mini.width,mini.height);
+				}else{
+					previewCtx.drawImage(vid,0,0,preview.width,preview.height);
+				}
+				filterCanvas();
+				setTimeout(function(){draw();},1000/28);
+			}catch(e){
+				if(e.name == 'NS_ERROR_NOT_AVAILABLE'){
+					setTimeout(function(){draw();},1000/28);
+					return;
+				}
+			}
+		}
+		
+		function CaptureStream(){
+			var constraints = {};
+			if(currentDevice){
+				constraints.video = {
+				  optional: [{ sourceId: currentDevice}]
+				};
+			}else{
+				constraints = {"video":true};
+			}
+			
+			navigator.getUserMedia(constraints,function(Stream){
+				vid.src = window.URL.createObjectURL(Stream);
+				stream = Stream;
+				draw();
+			},function(){
+				deviceSetting.innerHTML = "<option>No Camera</option>";
+				deviceSetting.addEventListener('mousedown',function(event){
+					event.preventDefault();
+					alert("There is no camera connected you stupid coconut! \n Connect a camera and refresh to try again.");
+				},false);
+			});
+		}
+		
+		CaptureStream();
+		
+		window.addEventListener('resize',function(){normalize()},false);
+		
+		window.addEventListener('blur',function(){dontDraw = true;},false);
+		
+		window.addEventListener('focus',function(){dontDraw = false;},false);
+		
+		dl.addEventListener('mousedown',function(){
+			var id = Math.round(Math.random()*1111);
+			this.setAttribute("download","snapshot"+id+"."+filetype.value);
+			
+			var data = preview.toDataURL('image/'+filetype.value,fileQuality.value);
+			
+			this.href = data;
+		},false);
+	</script>
+</body>
+</html>

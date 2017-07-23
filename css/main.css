@@ -68,17 +68,13 @@ html,body{
 
 .portfolioTile{
   position:relative;
-  box-shadow:0 0 1px #000;
   -webkit-transition:all .45s;
   -moz-transition:all .45s;
   -ms-transition:all .45s;
   transition:all .45s;
-  margin:.5em 0;
+  
 }
 
-.portfolioTile:hover{
-  box-shadow:0 0 6px #111;
-}
 
 .portfolioTile a{
   color:#000;
