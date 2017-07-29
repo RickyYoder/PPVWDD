@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<style>
+			html,body{margin:0;padding:0;min-height:100%;}
+			
+			nav ul{
+			background:#ddd;
+			border-bottom:2px solid #aaa;
+			display:block;
+			list-style-type:none;
+			margin:0;
+			padding:0;
+			position:fixed;
+			width:100%;
+			z-index:99;
+			}
+			
+			nav ul li{
+			-moz-transition:all .125s;
+			-webkit-transition:all .125s;
+			cursor:pointer;
+			display:inline-block;
+			margin:0 .2em;
+			padding:7px .75em;
+			position:relative;
+			transition:all .125s;
+			}
+			
+			nav ul li:hover{
+			background:#aaa;	
+			}
+			
+			nav ul li ul{
+			z-index:1;
+			max-height:0;
+			overflow:hidden;
+			-webkit-transform:perspective(400) rotate3d(1,0,0,-90deg);
+			-webkit-transform-origin:50% 0;
+			-moz-transform:perspective(400) rotate3d(1,0,0,-90deg);
+			-moz-transform-origin:50% 0;
+			-ms-transform:perspective(400) rotate3d(1,0,0,-90deg);
+			-ms-transform-origin:50% 0;
+			-o-transform:perspective(400) rotate3d(1,0,0,-90deg);
+			-o-transform-origin:50% 0;
+			-webkit-transition:350ms;
+			-moz-transition:350ms;
+			-o-transition:350ms;
+			transition:350ms;
+			left:0;
+			list-style-type:none;
+			padding:0;
+			position:absolute;
+			top:100%;
+			width:140px;
+			}
+			
+			nav ul li ul li{
+			display:block;	
+			background:#ddd;
+			padding:7px 4px;
+			max-width:100%;
+			margin:0;
+			}
+			
+			nav ul li ul li a{
+			color:#000;
+			display:inline-block;
+			height:100%;
+			text-decoration:none;
+			width:100%;
+			}
+			
+			nav ul > li:hover ul {
+			max-height:1000px;
+			-webkit-transform:perspective(400) rotate3d(0,0,0,0);
+			-o-transform:perspective(400) rotate3d(0,0,0,0);
+			-moz-transform:perspective(400) rotate3d(0,0,0,0);
+			-ms-transform:perspective(400) rotate3d(0,0,0,0);
+			transform:perspective(400) rotate3d(0,0,0,0);
+			}
+		</style>
+		<title>Sexy Dropdown</title>
+	</head>
+	<body>
+		<nav>
+			<ul>
+				<li>File
+				<ul>
+					<li id="new-file">New Image</li>
+					<li>Upload</li>
+					<li>Import</li>
+					<li>Take Picture</li>
+					<li>File Info</li>
+					<li style="display:none" id="save-file"><a href="#" download="image.png">Save File</a></li>
+					<li style="display:none" id="save-fileas">Save File As</li>
+				</ul>
+				</li>
+				<li>Edit
+				<ul>
+					<li>Undo</li>
+					<li>Redo</li>
+					<li>Select</li>
+					<li>Delete</li>
+					<li>Cut</li>
+					<li>Copy</li>
+					<li>Paste</li>
+				</ul>
+				</li>
+				<li>View
+				<ul>
+					<li>Zoom In</li>
+					<li>Zoom Out</li>
+					<li>Zoom Default</li>
+					<li>View With BG</li>
+				</ul>
+				</li>
+				<li>Tools
+				<ul>
+					<li>Pencil</li>
+					<li>Line</li>
+					<li>Rectangle</li>
+					<li>Circle</li>
+					<li>Pen</li>
+					<li>Airbrush</li>
+					<li>Bucket</li>
+					<li>Image</li>
+				</ul>
+				</li>
+				<li>Fx
+				<ul>
+					<li>Filters</li>
+					<li>Brightness</li>
+					<li>Contrast</li>
+				</ul>
+				</li>
+			</ul>
+		</nav>
+	</body>
+</html>
